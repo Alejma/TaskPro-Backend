@@ -2,24 +2,51 @@ const prisma = require('../prisma/client');
 const ApiError = require('../utils/apiError');
 const { createAuditLog } = require('./audit.service');
 
+const normalizeUserIds = (userIds) => {
+  if (!Array.isArray(userIds)) return [];
+  return [...new Set(userIds.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+};
+
+const normalizePriority = (priority) => {
+  if (priority == null) return 1;
+  const num = Number(priority);
+  return !isNaN(num) && num > 0 ? num : 1;
+};
+
 const createTask = async (payload, currentUser) => {
   const project = await prisma.project.findFirst({ where: { id: payload.projectId, isActive: true } });
   if (!project) throw new ApiError(404, 'Proyecto no encontrado');
+
+  // Aceptar tanto userIds como assigneeIds
+  const userIds = payload.userIds || payload.assigneeIds || [];
+  const normalizedUserIds = normalizeUserIds(userIds);
+
+  if (normalizedUserIds.length > 0) {
+    const validUsers = await prisma.user.findMany({
+      where: { id: { in: normalizedUserIds } },
+      select: { id: true }
+    });
+    const validUserIds = validUsers.map((u) => u.id);
+    const invalidIds = normalizedUserIds.filter((id) => !validUserIds.includes(id));
+    if (invalidIds.length > 0) {
+      throw new ApiError(400, `Usuario(s) no encontrado(s): ${invalidIds.join(', ')}`);
+    }
+  }
 
   const task = await prisma.task.create({
     data: {
       title: payload.title,
       description: payload.description,
       status: payload.status || 'PENDING',
-      priority: payload.priority || 1,
+      priority: normalizePriority(payload.priority),
       dueDate: payload.dueDate ? new Date(payload.dueDate) : null,
       projectId: payload.projectId
     }
   });
 
-  if (Array.isArray(payload.userIds) && payload.userIds.length > 0) {
+  if (normalizedUserIds.length > 0) {
     await prisma.taskAssignment.createMany({
-      data: payload.userIds.map((userId) => ({ taskId: task.id, userId })),
+      data: normalizedUserIds.map((userId) => ({ taskId: task.id, userId })),
       skipDuplicates: true
     });
     await createAuditLog({ action: 'ASSIGN_USERS', entity: 'Task', entityId: task.id, userId: currentUser.id });
@@ -58,22 +85,37 @@ const listTasksByProject = async (projectId) => {
 const updateTask = async (id, payload, currentUser) => {
   await getTaskById(id);
 
+  // Aceptar tanto userIds como assigneeIds
+  const userIds = payload.userIds || payload.assigneeIds;
+  const normalizedUserIds = normalizeUserIds(userIds);
+  if (normalizedUserIds.length > 0) {
+    const validUsers = await prisma.user.findMany({
+      where: { id: { in: normalizedUserIds } },
+      select: { id: true }
+    });
+    const validUserIds = validUsers.map((u) => u.id);
+    const invalidIds = normalizedUserIds.filter((id) => !validUserIds.includes(id));
+    if (invalidIds.length > 0) {
+      throw new ApiError(400, `Usuario(s) no encontrado(s): ${invalidIds.join(', ')}`);
+    }
+  }
+
   const task = await prisma.task.update({
     where: { id },
     data: {
       title: payload.title,
       description: payload.description,
       status: payload.status,
-      priority: payload.priority,
+      priority: payload.priority !== undefined ? normalizePriority(payload.priority) : undefined,
       dueDate: payload.dueDate ? new Date(payload.dueDate) : null
     }
   });
 
-  if (Array.isArray(payload.userIds)) {
+  if (payload.userIds !== undefined || payload.assigneeIds !== undefined) {
     await prisma.taskAssignment.deleteMany({ where: { taskId: id } });
-    if (payload.userIds.length > 0) {
+    if (normalizedUserIds.length > 0) {
       await prisma.taskAssignment.createMany({
-        data: payload.userIds.map((userId) => ({ taskId: id, userId })),
+        data: normalizedUserIds.map((userId) => ({ taskId: id, userId })),
         skipDuplicates: true
       });
     }
@@ -148,6 +190,16 @@ const getOverdueTasks = async () => {
   });
 };
 
+const deleteTask = async (id, currentUser) => {
+  const task = await prisma.task.findUnique({ where: { id } });
+  if (!task) throw new ApiError(404, 'Tarea no encontrada');
+
+  await prisma.task.delete({ where: { id } });
+  await createAuditLog({ action: 'DELETE', entity: 'Task', entityId: id, userId: currentUser.id });
+  
+  return { id, message: 'Tarea eliminada correctamente' };
+};
+
 module.exports = {
   createTask,
   listTasksByProject,
@@ -156,5 +208,6 @@ module.exports = {
   getKanbanByProject,
   addAttachmentToTask,
   getProjectMetrics,
-  getOverdueTasks
+  getOverdueTasks,
+  deleteTask
 };

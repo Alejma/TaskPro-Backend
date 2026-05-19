@@ -7,6 +7,14 @@ const createTask = catchAsync(async (req, res) => {
   return sendResponse(res, 201, 'Tarea creada', task);
 });
 
+const createTaskByProject = catchAsync(async (req, res) => {
+  const task = await taskService.createTask(
+    { ...req.body, projectId: Number(req.params.id) },
+    req.user
+  );
+  return sendResponse(res, 201, 'Tarea creada', task);
+});
+
 const listTasksByProject = catchAsync(async (req, res) => {
   const tasks = await taskService.listTasksByProject(Number(req.params.id));
   return sendResponse(res, 200, 'Tareas del proyecto', tasks);
@@ -38,12 +46,19 @@ const overdueTasks = catchAsync(async (_req, res) => {
   return sendResponse(res, 200, 'Tareas vencidas', tasks);
 });
 
+const deleteTask = catchAsync(async (req, res) => {
+  const result = await taskService.deleteTask(Number(req.params.id), req.user);
+  return sendResponse(res, 200, 'Tarea eliminada', result);
+});
+
 module.exports = {
   createTask,
+  createTaskByProject,
   listTasksByProject,
   getKanbanByProject,
   updateTaskStatus,
   updateTask,
   addAttachment,
-  overdueTasks
+  overdueTasks,
+  deleteTask
 };

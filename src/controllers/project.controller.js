@@ -23,6 +23,11 @@ const updateProject = catchAsync(async (req, res) => {
   return sendResponse(res, 200, 'Proyecto actualizado', project);
 });
 
+const updateProjectMembers = catchAsync(async (req, res) => {
+  const project = await projectService.updateProjectMembers(Number(req.params.id), req.body.memberIds, req.user);
+  return sendResponse(res, 200, 'Miembros del proyecto actualizados', project);
+});
+
 const updateProjectStatus = catchAsync(async (req, res) => {
   const project = await projectService.updateProjectStatus(Number(req.params.id), req.body.status, req.user);
   return sendResponse(res, 200, 'Estado del proyecto actualizado', project);
@@ -43,6 +48,7 @@ module.exports = {
   listProjects,
   getProjectById,
   updateProject,
+  updateProjectMembers,
   updateProjectStatus,
   deleteProject,
   metrics

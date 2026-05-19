@@ -11,7 +11,12 @@ router.post(
   '/',
   auth,
   role('ADMIN', 'GERENTE'),
-  [body('name').notEmpty(), validate],
+  [
+    body('name').notEmpty(),
+    body('memberIds').optional().isArray(),
+    body('memberIds.*').optional().isInt(),
+    validate
+  ],
   projectController.createProject
 );
 
@@ -22,8 +27,25 @@ router.put(
   '/:id',
   auth,
   role('ADMIN', 'GERENTE'),
-  [body('name').optional().notEmpty(), validate],
+  [
+    body('name').optional().notEmpty(),
+    body('memberIds').optional().isArray(),
+    body('memberIds.*').optional().isInt(),
+    validate
+  ],
   projectController.updateProject
+);
+
+router.patch(
+  '/:id/members',
+  auth,
+  role('ADMIN', 'GERENTE'),
+  [
+    body('memberIds').isArray(),
+    body('memberIds.*').optional().isInt(),
+    validate
+  ],
+  projectController.updateProjectMembers
 );
 
 router.patch(

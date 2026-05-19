@@ -16,10 +16,25 @@ router.post(
     body('title').notEmpty(),
     body('projectId').isInt(),
     body('userIds').optional().isArray(),
+    body('assigneeIds').optional().isArray(),
     body('status').optional().isIn(['PENDING', 'IN_PROGRESS', 'DONE']),
     validate
   ],
   taskController.createTask
+);
+
+router.post(
+  '/project/:id',
+  auth,
+  role('ADMIN', 'GERENTE'),
+  [
+    body('title').notEmpty(),
+    body('userIds').optional().isArray(),
+    body('assigneeIds').optional().isArray(),
+    body('status').optional().isIn(['PENDING', 'IN_PROGRESS', 'DONE']),
+    validate
+  ],
+  taskController.createTaskByProject
 );
 
 router.get('/project/:id', auth, taskController.listTasksByProject);
@@ -40,11 +55,19 @@ router.put(
     body('title').optional().notEmpty(),
     body('status').optional().isIn(['PENDING', 'IN_PROGRESS', 'DONE']),
     body('userIds').optional().isArray(),
+    body('assigneeIds').optional().isArray(),
     validate
   ],
   taskController.updateTask
 );
 
 router.post('/:id/attachments', auth, upload.single('file'), taskController.addAttachment);
+
+router.delete(
+  '/:id',
+  auth,
+  role('ADMIN', 'GERENTE'),
+  taskController.deleteTask
+);
 
 module.exports = router;
