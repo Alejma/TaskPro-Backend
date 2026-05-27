@@ -51,4 +51,10 @@ const updateUserStatus = async (id, isActive) => {
   return prisma.user.update({ where: { id }, data: { isActive } });
 };
 
-module.exports = { createUser, listUsers, updateUser, updateUserStatus };
+const listUsersSimple = () => prisma.user.findMany({
+  where: { isActive: true },
+  select: { id: true, name: true },
+  orderBy: { name: 'asc' }
+});
+
+module.exports = { createUser, listUsers, updateUser, updateUserStatus, listUsersSimple };

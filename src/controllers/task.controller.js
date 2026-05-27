@@ -1,4 +1,5 @@
 const taskService = require('../services/task.service');
+const { getTaskActivity } = require('../services/taskActivity.service');
 const catchAsync = require('../utils/catchAsync');
 const sendResponse = require('../utils/response');
 
@@ -13,6 +14,16 @@ const createTaskByProject = catchAsync(async (req, res) => {
     req.user
   );
   return sendResponse(res, 201, 'Tarea creada', task);
+});
+
+const listAllTasks = catchAsync(async (_req, res) => {
+  const tasks = await taskService.getAllTasks();
+  return sendResponse(res, 200, 'Tareas obtenidas', tasks);
+});
+
+const getTaskById = catchAsync(async (req, res) => {
+  const task = await taskService.getTaskById(Number(req.params.id));
+  return sendResponse(res, 200, 'Tarea obtenida', task);
 });
 
 const listTasksByProject = catchAsync(async (req, res) => {
@@ -51,14 +62,22 @@ const deleteTask = catchAsync(async (req, res) => {
   return sendResponse(res, 200, 'Tarea eliminada', result);
 });
 
+const taskActivity = catchAsync(async (req, res) => {
+  const activity = await getTaskActivity(Number(req.params.id));
+  return sendResponse(res, 200, 'Actividad de la tarea', activity);
+});
+
 module.exports = {
   createTask,
   createTaskByProject,
+  listAllTasks,
+  getTaskById,
   listTasksByProject,
   getKanbanByProject,
   updateTaskStatus,
   updateTask,
   addAttachment,
   overdueTasks,
-  deleteTask
+  deleteTask,
+  taskActivity
 };

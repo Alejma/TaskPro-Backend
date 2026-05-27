@@ -22,4 +22,9 @@ const updateUserStatus = catchAsync(async (req, res) => {
   return sendResponse(res, 200, 'Estado de usuario actualizado', user);
 });
 
-module.exports = { createUser, listUsers, updateUser, updateUserStatus };
+const listUsersSimple = catchAsync(async (_req, res) => {
+  const users = await userService.listUsersSimple();
+  return sendResponse(res, 200, 'Usuarios obtenidos', users);
+});
+
+module.exports = { createUser, listUsers, updateUser, updateUserStatus, listUsersSimple };

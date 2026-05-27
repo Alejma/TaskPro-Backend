@@ -39,8 +39,21 @@ const deleteProject = catchAsync(async (req, res) => {
 });
 
 const metrics = catchAsync(async (req, res) => {
-  const data = await taskService.getProjectMetrics(Number(req.params.id));
+  const days = req.query.days;
+  const data = await taskService.getProjectMetrics(Number(req.params.id), days);
   return sendResponse(res, 200, 'M?tricas del proyecto', data);
+});
+
+const userMetrics = catchAsync(async (req, res) => {
+  const days = req.query.days;
+  const data = await taskService.getProjectUserMetrics(Number(req.params.id), Number(req.params.userId), days);
+  return sendResponse(res, 200, 'M?tricas del usuario en el proyecto', data);
+});
+
+const allUsersPerformance = catchAsync(async (req, res) => {
+  const days = req.query.days;
+  const data = await taskService.getAllUsersPerformance(Number(req.params.id), days);
+  return sendResponse(res, 200, 'Rendimiento de usuarios en el proyecto', data);
 });
 
 module.exports = {
@@ -51,5 +64,7 @@ module.exports = {
   updateProjectMembers,
   updateProjectStatus,
   deleteProject,
-  metrics
+  metrics,
+  userMetrics,
+  allUsersPerformance
 };

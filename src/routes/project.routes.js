@@ -58,5 +58,7 @@ router.patch(
 
 router.delete('/:id', auth, role('ADMIN', 'GERENTE'), projectController.deleteProject);
 router.get('/:id/metrics', auth, projectController.metrics);
+router.get('/:id/metrics/users', auth, projectController.allUsersPerformance);
+router.get('/:id/metrics/users/:userId', auth, projectController.userMetrics);
 
 module.exports = router;

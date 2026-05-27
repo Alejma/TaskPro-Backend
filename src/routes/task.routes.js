@@ -11,10 +11,11 @@ const router = express.Router();
 router.post(
   '/',
   auth,
-  role('ADMIN', 'GERENTE'),
   [
     body('title').notEmpty(),
     body('projectId').isInt(),
+    body('priority').optional().isInt({ min: 1 }),
+    body('weight').optional().isInt({ min: 1 }),
     body('userIds').optional().isArray(),
     body('assigneeIds').optional().isArray(),
     body('status').optional().isIn(['PENDING', 'IN_PROGRESS', 'DONE']),
@@ -26,9 +27,10 @@ router.post(
 router.post(
   '/project/:id',
   auth,
-  role('ADMIN', 'GERENTE'),
   [
     body('title').notEmpty(),
+    body('priority').optional().isInt({ min: 1 }),
+    body('weight').optional().isInt({ min: 1 }),
     body('userIds').optional().isArray(),
     body('assigneeIds').optional().isArray(),
     body('status').optional().isIn(['PENDING', 'IN_PROGRESS', 'DONE']),
@@ -40,6 +42,8 @@ router.post(
 router.get('/project/:id', auth, taskController.listTasksByProject);
 router.get('/kanban/:projectId', auth, taskController.getKanbanByProject);
 router.get('/overdue/list', auth, taskController.overdueTasks);
+router.get('/', auth, taskController.listAllTasks);
+router.get('/:id', auth, taskController.getTaskById);
 
 router.patch(
   '/:id/status',
@@ -54,6 +58,8 @@ router.put(
   [
     body('title').optional().notEmpty(),
     body('status').optional().isIn(['PENDING', 'IN_PROGRESS', 'DONE']),
+    body('priority').optional().isInt({ min: 1 }),
+    body('weight').optional().isInt({ min: 1 }),
     body('userIds').optional().isArray(),
     body('assigneeIds').optional().isArray(),
     validate
@@ -61,6 +67,7 @@ router.put(
   taskController.updateTask
 );
 
+router.get('/:id/activity', auth, taskController.taskActivity);
 router.post('/:id/attachments', auth, upload.single('file'), taskController.addAttachment);
 
 router.delete(

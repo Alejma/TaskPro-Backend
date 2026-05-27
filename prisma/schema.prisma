@@ -44,6 +44,7 @@ model User {
   projectLinks ProjectMember[]
   assignments  TaskAssignment[]
   comments     Comment[]
+  activities   TaskActivity[]
   auditLogs    AuditLog[]
 }
 
@@ -78,12 +79,16 @@ model Task {
   description String?
   status      TaskStatus       @default(PENDING)
   priority    Int              @default(1)
+  weight      Int              @default(1)
   dueDate     DateTime?
+  createdAt   DateTime         @default(now())
   projectId   Int
   project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignments TaskAssignment[]
   comments    Comment[]
   attachments Attachment[]
+  history     TaskHistory[]
+  activities  TaskActivity[]
 }
 
 model TaskAssignment {
@@ -99,6 +104,7 @@ model TaskAssignment {
 model Comment {
   id        Int      @id @default(autoincrement())
   content   String
+  fileUrl   String?
   userId    Int
   taskId    Int
   createdAt DateTime @default(now())
@@ -111,6 +117,26 @@ model Attachment {
   fileUrl String
   taskId  Int
   task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskHistory {
+  id        Int        @id @default(autoincrement())
+  taskId    Int
+  oldStatus TaskStatus?
+  newStatus TaskStatus
+  createdAt DateTime   @default(now())
+  task      Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model TaskActivity {
+  id        Int      @id @default(autoincrement())
+  taskId    Int
+  userId    Int
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
