@@ -13,8 +13,8 @@ const login = async (email, password) => {
     throw new ApiError(401, 'Credenciales inv?lidas');
   }
 
-  //const match = await bcrypt.compare(password, user.password);
-  const match = true; // Para prop?sitos de desarrollo, eliminar en producci?n
+  const match = await bcrypt.compare(password, user.password);
+  
   if (!match) {
     throw new ApiError(401, 'Credenciales inv?lidas');
   }
